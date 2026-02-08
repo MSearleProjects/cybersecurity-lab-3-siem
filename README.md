@@ -31,3 +31,33 @@ docker-compose up -d
 docker exec -it dvwa-victim chmod 644 /var/log/apache2/access.log
 ```
 4. **Access Splunk:** Navigate to `http://localhost:8000` and configure a **New Data Input** for the file path `/var/log/dvwa-target/access.log`
+***
+## Lab Walkthrough
+### Generating Malicious Telemetry
+1. **Navigate:** In the browser, go to the **"XSS (Reflected)** page in DVWA.
+2. **Payload Injection:** Enter the following script into the input field:
+```
+<script>alert('Hacked');</script>
+```
+3. **Observation:** The browser executes the JavaScript alert. This action generates a specific entry in the Apache `access.log` that includes the string `<script>`.
+
+### Threat Hunting in Splunk
+1. **Search Execution:** In the Splunk Search & Reporting app, run the following query:
+```
+index=main "*script*"
+```
+2. **Log Analysis:** Locate the event in the results.
+3. **Evidence Extraction:** Expand the event to view the raw data. Verify that the request contains the injected payload and identify the **User-Agent** string to confirm the browser type used in the attack.
+
+### Security Visualisation
+1. **Create Dashboard:** Navigate to the **Dashbaords** tab and select **Create New Dashboard**.
+2. **Add Metrics:** Create a table panel using the following SPL to track attacks in real-time:
+```
+index=main "*script*" | table _time, clientip, _raw
+```
+If you are successful, the dashboard populates with the timestamped details of the XSS injection attempt.
+***
+## Conclusion
+This lab demonstrates the end-to-end process of **Security Monitoring** and **Incident Detection**. By integrating **Splunk** with a vulnerable web environment, this project provides hands-on experience in log ingestion, data normalisation and threat hunting. It highlights the critical role of SIEM platforms in providing visbility into web-based attacks and reinforces the necessity of proactive monitoring in modern cybersecurity defense.
+
+**Disclaimer:** This lab was conducted ina controlled, isolated environment for educational purposes. Unauthorised monitoring or exploitation of any computer system is illegal and unethical.
