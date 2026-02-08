@@ -1,0 +1,44 @@
+version: '3.8'
+
+networks:
+  pentest-net:
+    driver: bridge
+
+services:
+  # 1. The Victim (DVWA)
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: dvwa-victim
+    ports:
+      - "8080:80"
+    networks:
+      - pentest-net
+    volumes:
+      - dvwa-logs:/var/log/apache2
+
+  # 2. The Attacker (Kali)
+  kali-attacker:
+    image: kalilinux/kali-rolling
+    container_name: kali-attacker
+    networks:
+      - pentest-net
+    tty: true
+    command: tail -f /dev/null
+
+  # 3. The SIEM (Splunk)
+  splunk:
+    image: splunk/splunk:latest
+    container_name: splunk-siem
+    environment:
+      - SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=Password123!
+    ports:
+      - "8000:8000" 
+    networks:
+      - pentest-net
+    volumes:
+      - dvwa-logs:/var/log/dvwa-target:ro 
+
+volumes:
+  dvwa-logs:
